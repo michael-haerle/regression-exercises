@@ -120,7 +120,7 @@ def prepare_zillow(df):
 def scale_data(train, 
                validate, 
                test, 
-               cols = ['bedrooms', 'bathrooms', 'square_feet', 'tax_value', 'lot_square_feet']):
+               cols = ['bedrooms', 'bathrooms', 'square_feet', 'lot_square_feet']):
     '''
     Scales the 3 data splits. 
     Takes in train, validate, and test data splits and returns their scaled counterparts.
