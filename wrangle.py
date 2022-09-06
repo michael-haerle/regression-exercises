@@ -2,6 +2,7 @@ import pandas as pd
 import os
 from sklearn.model_selection import train_test_split
 import sklearn.preprocessing
+import plotly.express as px
 
 import env
 
@@ -9,7 +10,7 @@ def get_connection(db, user=env.user, host=env.host, password=env.password):
     return f'mysql+pymysql://{user}:{password}@{host}/{db}'
 
 def new_zillow_data():
-    return pd.read_sql('SELECT bedroomcnt, bathroomcnt, calculatedfinishedsquarefeet, taxvaluedollarcnt, yearbuilt, lotsizesquarefeet, fips, regionidzip, logerror, transactiondate FROM properties_2017 JOIN propertylandusetype USING(propertylandusetypeid) JOIN predictions_2017 USING(parcelid) WHERE propertylandusedesc LIKE "Single Family Residential" ;', get_connection('zillow'))
+    return pd.read_sql('SELECT bedroomcnt, bathroomcnt, calculatedfinishedsquarefeet, taxvaluedollarcnt, yearbuilt, lotsizesquarefeet, fips, regionidzip, logerror, transactiondate, latitude, longitude FROM properties_2017 JOIN propertylandusetype USING(propertylandusetypeid) JOIN predictions_2017 USING(parcelid) WHERE propertylandusedesc LIKE "Single Family Residential" ;', get_connection('zillow'))
 
 def get_zillow_data():
     filename = "zillow.csv"
@@ -89,6 +90,14 @@ def filter(x):
         return '2010s'
 
 
+def fips(x):
+    if x == 6037:
+        return 'Los Angeles, CA'
+    if x == 6059:
+        return 'Orange, CA'
+    if x == 6111:
+        return 'Ventura, CA'
+
 def prepare_zillow(df):
     # renaming columns
     df = df.rename(columns = {'bedroomcnt':'bedrooms', 
@@ -111,6 +120,11 @@ def prepare_zillow(df):
     df.drop(df[df.year_built < 1850].index, inplace=True)
     #applying the filter function to 'year_built' column 
     df['decade'] = df['year_built'].apply(filter)
+    # converting lat and lon to correct figures
+    df['latitude'] = df.latitude/1000000
+    df['longitude'] = df.longitude/1000000
+    # applying fips function to 'fips' column
+    train['fips_str'] = train['fips'].apply(fips)
     # train/validate/test split
     train_validate, test = train_test_split(df, test_size=.2, random_state=123)
     train, validate = train_test_split(train_validate, test_size=.3, random_state=123)
